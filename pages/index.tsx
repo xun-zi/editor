@@ -3,10 +3,26 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import dynamic from 'next/dynamic';
+import { useEffect } from 'react';
+import { Lexer } from '../language/lexer';
+import { input } from '../language/input';
+import { TokenType } from '../language/token';
+import { parser } from '../language/parser';
+import { evaluate } from '../language/evaluate';
+import { Environment } from '../language/object';
 
 const Editor = dynamic(import('../compontents/Editor'), { ssr: false })
 
 const Home: NextPage = () => {
+
+  useEffect(() => {
+    const lexer = new Lexer(input);
+    const parse = new parser(lexer);
+    const Program = parse.Program();
+    console.log(Program);
+    evaluate(Program,new Environment());
+  },[])
+
   return (
     <div className={styles.container}>
       <Head>
@@ -16,7 +32,7 @@ const Home: NextPage = () => {
       </Head>
 
       <Editor />
-
+      
 
 
     </div>
