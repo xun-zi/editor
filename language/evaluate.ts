@@ -30,17 +30,25 @@ export function evaluate(node:node,environment:Environment):Obj{
             return evalFunction(node,environment);
         case ASTkind.functionUseExpression:
             return evalFunctionUse(node,environment);
+        case ASTkind.returnStatement:
+            return evaluate(node.value,environment);
     }
-    throw new Error(`你这个表达式有点问题`)
+    throw new Error(`你这个表达式有点问题${node}`)
 }
 
 
-function evalProgram(statements:Statement[],environment:Environment){
+function evalProgram(statements:Statement[],environment:Environment):Obj{
+    let returnVal:Obj = NULL;
     const res = statements.map((statement) => {
         const state = evaluate(statement,environment);
         console.log(state.inspect());
+        if(statement.ASTkind === ASTkind.returnStatement){
+            console.log('return')
+            returnVal = state;
+        }
     })
-    return NULL;
+
+    return returnVal;
 }
 
 function evalIf(expression:IfExpression,environment:Environment):Obj{
@@ -79,8 +87,8 @@ function evalFunctionUse(expression:functionUseExpression,enviroment:Environment
     })
     const fnEnviroment = new Environment(fn.enviroment);
     fn.paramters.forEach((par,index) => {
-        if(index >= props.length)return;
-        fnEnviroment.statement(par.value,clone(props[index]));
+        if(index >= props.length)fnEnviroment.statement(par.value,NULL);
+        else fnEnviroment.statement(par.value,clone(props[index]));
     })
     if(fn.body)evaluate(fn.body,fnEnviroment)
     return NULL

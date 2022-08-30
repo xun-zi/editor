@@ -24,6 +24,7 @@ export enum TokenType{
     else="ELSE",
     for='FOR',
     fn='FUNCTION',
+    return='RETURN',
 }
 
 export type Token = {
@@ -37,6 +38,7 @@ const keywords:{[keywords:string]:TokenType} = {
     ['else']:TokenType.else,
     ['for']:TokenType.for,
     ['fn']:TokenType.fn,
+    ['return']:TokenType.return,
 }
 
 export function lookupIdentify(identify:string){

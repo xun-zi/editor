@@ -15,7 +15,7 @@ export default function Editor(){
         name="app_code_editor"
         fontSize={14}
         showPrintMargin
-        height="200px"
+        height="100vh"
         width="1000px"
         showGutter
         onChange={value => {

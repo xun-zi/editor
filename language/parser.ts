@@ -1,4 +1,4 @@
-import { ASTkind, codeBlockExpression, Expression, forExpression, functionExpresssion, functionUseExpression, headPar, IdnetExpression, IfExpression, infixExpression, IntegerExpression, LetStatement, node, prefixExpression, Program, Statement } from "./ast";
+import { ASTkind, codeBlockExpression, Expression, forExpression, functionExpresssion, functionUseExpression, headPar, IdnetExpression, IfExpression, infixExpression, IntegerExpression, LetStatement, node, prefixExpression, Program, returnStatement, Statement } from "./ast";
 import { Lexer } from "./lexer";
 import { Token, TokenType } from "./token";
 
@@ -86,6 +86,9 @@ export class parser {
             case TokenType.Let:
                 statement = this.parseLetStatement();
                 break;
+            case TokenType.return:
+                statement = this.parseReturnStatement();
+                break;
             default:
                 statement = this.parseExpression(Precedence.Lowest);
         }
@@ -109,6 +112,15 @@ export class parser {
         return {
             ASTkind: ASTkind.Let,
             Ident,
+        }
+    }
+
+    parseReturnStatement():returnStatement{
+        this.readToken();
+        const value = this.parseExpression(Precedence.Lowest);
+        return {
+            ASTkind:ASTkind.returnStatement,
+            value,
         }
     }
 
@@ -266,7 +278,6 @@ export class parser {
 
     paramterExpression(tokenType:TokenType):Expression[]{
         const paramters = [];
-        console.log(tokenType);
         while(!this.isPeekTokenType(tokenType)){
             this.readToken();
             const paramter = this.parseExpression(Precedence.Lowest);

@@ -10,8 +10,9 @@ if(b){
 }
 
 fn hello(b){
-    b;
-    b = b + 1;
+    b
+    b =1;
+    return b
 }
 hello()
 hello()

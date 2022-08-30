@@ -13,6 +13,7 @@ export enum ASTkind{
     forExpression='FOREXPRESSION',
     functionExpresssion='FUNCTIONEXPRESSION',
     functionUseExpression='FUNCTIONUSEEXPRESSION',
+    returnStatement='RETURNSTATEMENT',
 }
 
 export type node = Expression | Statement | Program;
@@ -20,6 +21,7 @@ export type node = Expression | Statement | Program;
 export type Statement = 
     |LetStatement
     |Expression
+    |returnStatement
 
 export type Expression = 
     |prefixExpression
@@ -31,6 +33,7 @@ export type Expression =
     |forExpression
     |functionExpresssion
     |functionUseExpression
+    
 
 export type Program = {
     ASTkind:ASTkind.Program
@@ -102,5 +105,10 @@ export type functionUseExpression = {
     ASTkind:ASTkind.functionUseExpression,
     Ident:Ident
     paramter:Expression[]
+}
+
+export type returnStatement = {
+    ASTkind:ASTkind.returnStatement
+    value:Expression
 }
 

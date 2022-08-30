@@ -12,7 +12,6 @@ export class Lexer {
         this.input = input;
         this.readChar();
     }
-
     lexer(): Token {
         this.skipSpace();
         let token;
