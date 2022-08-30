@@ -56,6 +56,8 @@ export class Lexer {
             case ';':
                 token = this.newToken(TokenType.Semicolon, this.ch);
                 break;
+            case ',':
+                token = this.newToken(TokenType.Comma,this.ch);
             default:
                 if (this.isDigital(this.ch)) return this.newToken(TokenType.integer, this.readInteger());
                 else if (this.isLetter(this.ch)) {

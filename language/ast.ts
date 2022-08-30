@@ -11,6 +11,8 @@ export enum ASTkind{
     IfExpression="IFEXPRESSION",
     codeBlockExpression='CODEBLOCKEXPRESSION',
     forExpression='FOREXPRESSION',
+    functionExpresssion='FUNCTIONEXPRESSION',
+    functionUseExpression='FUNCTIONUSEEXPRESSION',
 }
 
 export type node = Expression | Statement | Program;
@@ -27,6 +29,8 @@ export type Expression =
     |IfExpression
     |codeBlockExpression
     |forExpression
+    |functionExpresssion
+    |functionUseExpression
 
 export type Program = {
     ASTkind:ASTkind.Program
@@ -85,5 +89,18 @@ export type forExpression = {
 export type codeBlockExpression = {
     ASTkind:ASTkind.codeBlockExpression
     value:Statement[]
+}
+
+export type functionExpresssion = {
+    ASTkind:ASTkind.functionExpresssion,
+    Ident:Ident,
+    paramter:Expression[],
+    body?:codeBlockExpression,
+}
+
+export type functionUseExpression = {
+    ASTkind:ASTkind.functionUseExpression,
+    Ident:Ident
+    paramter:Expression[]
 }
 

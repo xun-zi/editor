@@ -1,4 +1,4 @@
-import { ASTkind, codeBlockExpression, Expression, forExpression, headPar, IdnetExpression, IfExpression, infixExpression, IntegerExpression, LetStatement, node, prefixExpression, Program, Statement } from "./ast";
+import { ASTkind, codeBlockExpression, Expression, forExpression, functionExpresssion, functionUseExpression, headPar, IdnetExpression, IfExpression, infixExpression, IntegerExpression, LetStatement, node, prefixExpression, Program, Statement } from "./ast";
 import { Lexer } from "./lexer";
 import { Token, TokenType } from "./token";
 
@@ -45,6 +45,7 @@ export class parser {
         this.parseIf = this.parseIf.bind(this);
         this.parseCodeBloackExpression = this.parseCodeBloackExpression.bind(this);
         this.parseForExpression = this.parseForExpression.bind(this);
+        this.parseFunctionExpression = this.parseFunctionExpression.bind(this);
 
         this.parseInfixExpression = this.parseInfixExpression.bind(this);
         this.parsePrefixFunction = {
@@ -54,6 +55,7 @@ export class parser {
             [TokenType.if]: this.parseIf,
             [TokenType.LBrace]: this.parseCodeBloackExpression,
             [TokenType.for]: this.parseForExpression,
+            [TokenType.fn]:this.parseFunctionExpression
         }
         this.parseInfixFunction = {
             [TokenType.add]: this.parseInfixExpression,
@@ -93,6 +95,7 @@ export class parser {
     parseLetStatement(): LetStatement {
         this.expectToken(TokenType.Ident);
         const Ident = this.parseIdent();
+        if(Ident.ASTkind !== ASTkind.Ident)throw new Error(`这个声明中被赋值不是Idnet`);
         if (this.isPeekTokenType(TokenType.Assign)) {
             this.readToken();
             this.readToken();
@@ -146,7 +149,19 @@ export class parser {
         return expression;
     }
 
-    parseIdent(): IdnetExpression {
+    parseIdent(): IdnetExpression|functionUseExpression {
+        const Ident = this.newIdent();
+        if(!this.isPeekTokenType(TokenType.Lparen))return Ident;
+        this.readToken();
+        const paramter = this.paramterExpression(TokenType.Rparen);
+        return {
+            ASTkind:ASTkind.functionUseExpression,
+            Ident,
+            paramter,
+        }
+    }
+
+    newIdent():IdnetExpression{
         return {
             ASTkind: ASTkind.Ident,
             value: this.curToken.value
@@ -209,6 +224,31 @@ export class parser {
         }
     }
 
+    parseFunctionExpression():functionExpresssion{
+        this.expectToken(TokenType.Ident);
+        const Ident = this.newIdent();
+        this.expectToken(TokenType.Lparen);
+        const paramter = this.paramterExpression(TokenType.Rparen);
+        if(!this.isPeekTokenType(TokenType.LBrace)) return {
+            ASTkind:ASTkind.functionExpresssion,
+            Ident,
+            paramter,
+        }
+
+        this.readToken();
+        const body = this.parseExpression(Precedence.Lowest);
+        if(body.ASTkind !== ASTkind.codeBlockExpression){
+            throw new Error(`声明后面并不是代码块`)
+        }
+        return {
+            ASTkind:ASTkind.functionExpresssion,
+            Ident,
+            paramter,
+            body,
+        }
+    }
+
+
     parseCodeBloackExpression(): codeBlockExpression {
 
         const statements = [];
@@ -224,6 +264,21 @@ export class parser {
         }
     }
 
+    paramterExpression(tokenType:TokenType):Expression[]{
+        const paramters = [];
+        console.log(tokenType);
+        while(!this.isPeekTokenType(tokenType)){
+            this.readToken();
+            const paramter = this.parseExpression(Precedence.Lowest);
+            if(!this.isPeekTokenType(tokenType))this.expectToken(TokenType.Comma);
+            paramters.push(paramter);
+        }
+
+        this.readToken();
+
+        return paramters;
+    }
+
     //infix
     parseInfixExpression(expression: Expression): infixExpression {
         const operator = this.curToken.value;
@@ -235,6 +290,9 @@ export class parser {
             right: this.parseExpression(this.curTokenPrecedence())
         }
     }
+
+
+
 
     curTokenPrecedence(): Precedence {
         return PrecedenceExpression[this.curToken.TokenType] || Precedence.Lowest
@@ -258,9 +316,6 @@ export class parser {
         if (TokenType === this.peekToken.TokenType) this.readToken();
         else throw new Error(`不是预期的${TokenType} 而是${this.peekToken.TokenType}`);
     }
-
-
-
 
     readToken() {
         this.curToken = this.peekToken

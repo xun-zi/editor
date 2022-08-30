@@ -14,6 +14,7 @@ export enum TokenType{
     Ident="IDENT",
     Assign="=",
     EOF='EOF',
+    Comma=',',
     Semicolon = ";",
     
 
@@ -22,6 +23,7 @@ export enum TokenType{
     if='IF',
     else="ELSE",
     for='FOR',
+    fn='FUNCTION',
 }
 
 export type Token = {
@@ -34,6 +36,7 @@ const keywords:{[keywords:string]:TokenType} = {
     ['if']:TokenType.if,
     ['else']:TokenType.else,
     ['for']:TokenType.for,
+    ['fn']:TokenType.fn,
 }
 
 export function lookupIdentify(identify:string){

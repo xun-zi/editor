@@ -8,4 +8,11 @@ if(b){
 }else{
     2
 }
+
+fn hello(b){
+    b;
+    b = b + 1;
+}
+hello()
+hello()
 `

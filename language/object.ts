@@ -1,3 +1,5 @@
+import { ASTkind, codeBlockExpression, Expression, Ident, infixExpression } from "./ast"
+
 export interface Obj{
     inspect():string
 }
@@ -46,6 +48,29 @@ export class Integer implements Obj{
     }
     inspect(): string {
         return `${this.value}`
+    }
+}
+
+export class Fn implements Obj{
+    enviroment:Environment
+    body?:codeBlockExpression
+    paramters:Ident[];
+    constructor(paramters:Expression[] = [],environment:Environment,body?:codeBlockExpression){
+        this.enviroment = environment;
+        this.body = body;
+        paramters.forEach((paramter) => {
+            if(paramter.ASTkind === ASTkind.Ident)return;
+            throw Error(`函数参数写法有问题`)
+        })
+        this.paramters = paramters as Ident[];
+    }
+
+    setbody(body:codeBlockExpression){
+        this.body = body
+    }
+
+    inspect(): string {
+        return `Function`
     }
 }
 
