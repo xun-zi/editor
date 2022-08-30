@@ -3,14 +3,25 @@ export enum TokenType{
     minus="-",
     asterisk="*",
     slash='/',
-    Let="LET",
-    Lparen="LPAREN",
-    Rparen="Rparen",
+    
+    Lparen="(",
+    Rparen=")",
+    LBrace='{',
+    RBrace='}',
+    LBracket='[',
+    RBracket=']',
     integer="INTEGER",
     Ident="IDENT",
     Assign="=",
     EOF='EOF',
     Semicolon = ";",
+    
+
+    //keyword
+    Let="LET",
+    if='IF',
+    else="ELSE",
+    for='FOR',
 }
 
 export type Token = {
@@ -19,7 +30,10 @@ export type Token = {
 }
  
 const keywords:{[keywords:string]:TokenType} = {
-    ['let']:TokenType.Let
+    ['let']:TokenType.Let,
+    ['if']:TokenType.if,
+    ['else']:TokenType.else,
+    ['for']:TokenType.for,
 }
 
 export function lookupIdentify(identify:string){

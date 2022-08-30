@@ -35,6 +35,18 @@ export class Lexer {
             case ')':
                 token = this.newToken(TokenType.Rparen, this.ch);
                 break;
+            case '[':
+                token = this.newToken(TokenType.LBracket,this.ch);
+                break;
+            case ']':
+                token = this.newToken(TokenType.RBracket,this.ch);
+                break;
+            case '{':
+                token = this.newToken(TokenType.LBrace,this.ch);
+                break;
+            case '}':
+                token = this.newToken(TokenType.RBrace,this.ch);
+                break;
             case '=':
                 token = this.newToken(TokenType.Assign, this.ch);
                 break;

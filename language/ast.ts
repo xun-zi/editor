@@ -8,6 +8,9 @@ export enum ASTkind{
     Integer='INTEGER',
     Ident="IDENT",
     Program="PROGRAM",
+    IfExpression="IFEXPRESSION",
+    codeBlockExpression='CODEBLOCKEXPRESSION',
+    forExpression='FOREXPRESSION',
 }
 
 export type node = Expression | Statement | Program;
@@ -21,7 +24,10 @@ export type Expression =
     |infixExpression
     |IntegerExpression
     |Ident
-    
+    |IfExpression
+    |codeBlockExpression
+    |forExpression
+
 export type Program = {
     ASTkind:ASTkind.Program
     value:Statement[];
@@ -60,3 +66,24 @@ export type Ident = {
     ASTkind:ASTkind.Ident
     value:string
 }
+
+export type IfExpression = {
+    ASTkind:ASTkind.IfExpression,
+    condition:Expression,
+    ifTrue:Expression
+    ifFalse?:Expression
+}
+
+export type headPar = Statement | null;
+
+export type forExpression = {
+    ASTkind:ASTkind.forExpression
+    head:headPar[]
+    body:Expression
+}
+
+export type codeBlockExpression = {
+    ASTkind:ASTkind.codeBlockExpression
+    value:Statement[]
+}
+

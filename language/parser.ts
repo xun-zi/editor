@@ -1,4 +1,4 @@
-import { ASTkind, Expression, IdnetExpression, infixExpression, IntegerExpression, LetStatement, node, prefixExpression, Program, Statement } from "./ast";
+import { ASTkind, codeBlockExpression, Expression, forExpression, headPar, IdnetExpression, IfExpression, infixExpression, IntegerExpression, LetStatement, node, prefixExpression, Program, Statement } from "./ast";
 import { Lexer } from "./lexer";
 import { Token, TokenType } from "./token";
 
@@ -21,6 +21,10 @@ const PrecedenceExpression: Partial<Record<TokenType, Precedence>> = {
     [TokenType.slash]: Precedence.asteriskSlash,
     [TokenType.Lparen]: Precedence.Bracket,
     [TokenType.Rparen]: Precedence.Bracket,
+    [TokenType.LBrace]: Precedence.Bracket,
+    [TokenType.RBrace]: Precedence.Bracket,
+    [TokenType.LBracket]: Precedence.Bracket,
+    [TokenType.RBracket]: Precedence.Bracket,
     [TokenType.Assign]: Precedence.Assign,
 }
 
@@ -38,18 +42,25 @@ export class parser {
         this.parseIntegerExpression = this.parseIntegerExpression.bind(this);
         this.parseLparenExpression = this.parseLparenExpression.bind(this);
         this.parseIdent = this.parseIdent.bind(this);
+        this.parseIf = this.parseIf.bind(this);
+        this.parseCodeBloackExpression = this.parseCodeBloackExpression.bind(this);
+        this.parseForExpression = this.parseForExpression.bind(this);
+
         this.parseInfixExpression = this.parseInfixExpression.bind(this);
         this.parsePrefixFunction = {
-            [TokenType.integer]:this.parseIntegerExpression,
-            [TokenType.Lparen]:this.parseLparenExpression,
-            [TokenType.Ident]:this.parseIdent,
+            [TokenType.integer]: this.parseIntegerExpression,
+            [TokenType.Lparen]: this.parseLparenExpression,
+            [TokenType.Ident]: this.parseIdent,
+            [TokenType.if]: this.parseIf,
+            [TokenType.LBrace]: this.parseCodeBloackExpression,
+            [TokenType.for]: this.parseForExpression,
         }
         this.parseInfixFunction = {
-            [TokenType.add]:this.parseInfixExpression,
-            [TokenType.minus]:this.parseInfixExpression,
-            [TokenType.asterisk]:this.parseInfixExpression,
-            [TokenType.slash]:this.parseInfixExpression,
-            [TokenType.Assign]:this.parseInfixExpression,
+            [TokenType.add]: this.parseInfixExpression,
+            [TokenType.minus]: this.parseInfixExpression,
+            [TokenType.asterisk]: this.parseInfixExpression,
+            [TokenType.slash]: this.parseInfixExpression,
+            [TokenType.Assign]: this.parseInfixExpression,
         }
     }
 
@@ -57,14 +68,7 @@ export class parser {
     Program(): Program {
         const statements: Statement[] = [];
         while (this.curToken.TokenType !== TokenType.EOF) {
-            let statement: Statement;
-            switch (this.curToken.TokenType) {
-                case TokenType.Let:
-                    statement = this.parseLetStatement();
-                    break;
-                default:
-                    statement = this.parseExpression(Precedence.Lowest);
-            }
+            let statement = this.parseStatement();
             statements.push(statement);
             this.readToken();
         }
@@ -74,10 +78,22 @@ export class parser {
         }
     }
 
+    parseStatement(): Statement {
+        let statement;
+        switch (this.curToken.TokenType) {
+            case TokenType.Let:
+                statement = this.parseLetStatement();
+                break;
+            default:
+                statement = this.parseExpression(Precedence.Lowest);
+        }
+        return statement;
+    }
+
     parseLetStatement(): LetStatement {
         this.expectToken(TokenType.Ident);
         const Ident = this.parseIdent();
-        if(this.isPeekTokenType(TokenType.Assign)){
+        if (this.isPeekTokenType(TokenType.Assign)) {
             this.readToken();
             this.readToken();
             return {
@@ -86,9 +102,9 @@ export class parser {
                 value: this.parseExpression(Precedence.Lowest),
             }
         }
-        
+
         return {
-            ASTkind:ASTkind.Let,
+            ASTkind: ASTkind.Let,
             Ident,
         }
     }
@@ -100,69 +116,143 @@ export class parser {
             throw new Error(`在prefix中没有${this.curToken.TokenType}这个状态`);
         }
 
-        let expression:Expression = prefix();
+        let expression: Expression = prefix();
 
         while (!this.isPeekTokenType(TokenType.Semicolon)
-                || precedence > this.peekTokenPrecedence()) {
+            || precedence > this.peekTokenPrecedence()) {
             const infix = this.parseInfixFunction[this.peekToken.TokenType];
             if (!infix) return expression;
             this.readToken();
             expression = infix(expression);
         }
 
-        if(this.isPeekTokenType(TokenType.Semicolon))this.readToken();
+        if (this.isPeekTokenType(TokenType.Semicolon)) this.readToken();
 
         return expression;
     }
 
     //prefix
-    parseIntegerExpression():IntegerExpression{
+    parseIntegerExpression(): IntegerExpression {
         return {
-            ASTkind:ASTkind.Integer,
-            value:+this.curToken.value
+            ASTkind: ASTkind.Integer,
+            value: +this.curToken.value
         }
     }
 
-    parseLparenExpression():Expression{
+    parseLparenExpression(): Expression {
         this.readToken();
         const expression = this.parseExpression(Precedence.Bracket);
         this.expectToken(TokenType.Rparen);
         return expression;
     }
 
-    parseIdent():IdnetExpression{
+    parseIdent(): IdnetExpression {
         return {
-            ASTkind:ASTkind.Ident,
-            value:this.curToken.value
+            ASTkind: ASTkind.Ident,
+            value: this.curToken.value
         }
     }
 
+    parseIf(): IfExpression {
+        this.expectToken(TokenType.Lparen);
+        this.readToken();
+        const condition = this.parseExpression(Precedence.Bracket)
+        this.expectToken(TokenType.Rparen);
+        this.readToken();
+        const ifTrue = this.parseExpression(Precedence.Lowest);
+        let ifFalse;
+        if (this.isPeekTokenType(TokenType.else)) {
+            this.readToken();
+            this.readToken();
+            ifFalse = this.parseExpression(Precedence.Lowest);
+        }
+
+        return {
+            ASTkind: ASTkind.IfExpression,
+            condition,
+            ifTrue,
+            ifFalse,
+        }
+    }
+
+    parseForExpression(): forExpression {
+        this.expectToken(TokenType.Lparen);
+        const head: headPar[] = [];
+        
+        [TokenType.Semicolon, TokenType.Semicolon].forEach((tokenType) => {
+            this.readToken();
+            if (this.isCurTokenType(tokenType)) head.push(null);
+            else head.push(this.parseStatement());
+        })
+        // //第一个参数
+        // if(this.isPeekTokenType(TokenType.Semicolon))head.push(null);
+        // else head.push(this.parseExpression(Precedence.Lowest));
+        // this.expectToken(TokenType.Semicolon);
+        // //第二个
+        // if(this.isPeekTokenType(TokenType.Semicolon))head.push(null);
+        // else head.push(this.parseExpression(Precedence.Lowest));
+        // this.expectToken(TokenType.Semicolon);
+        // //第三个
+        if (this.isPeekTokenType(TokenType.Rparen)) head.push(null);
+        else {
+            this.readToken();
+            head.push(this.parseExpression(Precedence.Lowest));
+        }
+        
+        this.expectToken(TokenType.Rparen);
+        this.expectToken(TokenType.LBrace);
+        const body = this.parseExpression(Precedence.Lowest);
+        return {
+            ASTkind: ASTkind.forExpression,
+            head,
+            body,
+        }
+    }
+
+    parseCodeBloackExpression(): codeBlockExpression {
+
+        const statements = [];
+        while (!this.isPeekTokenType(TokenType.RBrace)) {
+            this.readToken();
+            const statement = this.parseStatement();
+            statements.push(statement);
+        }
+        this.readToken();
+        return {
+            ASTkind: ASTkind.codeBlockExpression,
+            value: statements,
+        }
+    }
 
     //infix
-    parseInfixExpression(expression:Expression):infixExpression{
+    parseInfixExpression(expression: Expression): infixExpression {
         const operator = this.curToken.value;
         this.readToken();
         return {
-            ASTkind:ASTkind.infixExpression,
-            left:expression,
+            ASTkind: ASTkind.infixExpression,
+            left: expression,
             operator,
-            right:this.parseExpression(this.curTokenPrecedence())
+            right: this.parseExpression(this.curTokenPrecedence())
         }
     }
 
-    curTokenPrecedence():Precedence{
-        return PrecedenceExpression[this.curToken.TokenType]||Precedence.Lowest
+    curTokenPrecedence(): Precedence {
+        return PrecedenceExpression[this.curToken.TokenType] || Precedence.Lowest
     }
 
     peekTokenPrecedence(): Precedence {
         return PrecedenceExpression[this.peekToken.TokenType] || Precedence.Lowest;
     }
 
+    isCurTokenType(TokenType: TokenType): boolean {
+        return this.curToken.TokenType === TokenType
+    }
+
     isPeekTokenType(TokenType: TokenType): boolean {
         return this.peekToken.TokenType === TokenType
     }
 
-    
+
 
     expectToken(TokenType: TokenType) {
         if (TokenType === this.peekToken.TokenType) this.readToken();

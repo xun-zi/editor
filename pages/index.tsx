@@ -17,6 +17,12 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     const lexer = new Lexer(input);
+    // const test = new Lexer(input);
+    // let a = test.lexer();
+    // while(a.TokenType !== TokenType.EOF){
+    //   console.log(a)
+    //   a = test.lexer();
+    // }
     const parse = new parser(lexer);
     const Program = parse.Program();
     console.log(Program);

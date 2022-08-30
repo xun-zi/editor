@@ -1,5 +1,5 @@
-import { ASTkind, node,Statement,Expression, infixExpression, LetStatement, IdnetExpression, IntegerExpression } from "./ast";
-import { Environment, Integer, NULL, Obj } from "./object";
+import { ASTkind, node,Statement,Expression, infixExpression, LetStatement, IdnetExpression, IntegerExpression, IfExpression, forExpression } from "./ast";
+import { Environment, Integer, Null, NULL, Obj } from "./object";
 
 
 
@@ -19,6 +19,12 @@ export function evaluate(node:node,environment:Environment):Obj{
             return evalLet(node,environment);
         case ASTkind.Ident:
             return evalIdent(node.value,environment);
+        case ASTkind.IfExpression:
+            return evalIfExpression(node,environment);
+        case ASTkind.forExpression:
+            return evalForExpression(node,new Environment(environment));
+        case ASTkind.codeBlockExpression:
+            return evalProgram(node.value,environment);
     }
     throw new Error(`你这个表达式有点问题`)
 }
@@ -30,6 +36,29 @@ function evalProgram(statements:Statement[],environment:Environment){
         console.log(state.inspect());
     })
     return NULL;
+}
+
+function evalIfExpression(expression:IfExpression,environment:Environment):Obj{
+    const condition = evaluate(expression.condition,environment);
+
+    if(isTrue(condition))evaluate(expression.ifTrue,environment);
+    else if(expression.ifFalse)evaluate(expression.ifFalse,environment);
+    
+    return NULL
+}
+
+function evalForExpression(expression:forExpression,environment:Environment):Obj{
+    const {head,body} = expression
+    if(head[0])evaluate(head[0],environment);
+    while(!head[1] || isTrue(evaluate(head[1],environment))){
+        evaluate(body,environment);
+        if(head[2])evaluate(head[2],environment);
+    }
+    return NULL;
+}
+
+function isTrue(obj:Obj){
+    return !(obj instanceof Integer && obj.value === 0)
 }
 
 function evalInteger(expression:IntegerExpression):Integer{

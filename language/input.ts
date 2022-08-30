@@ -1,5 +1,11 @@
 export const input = `
-let a = 1 + 2 * 3;
-let b = 3 + a;
-a = a + b;
+for(let a = 17;a;a = a - 1){
+    a;
+}
+let b = 0;
+if(b){
+    1
+}else{
+    2
+}
 `
