@@ -2,26 +2,30 @@ import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-jsx';// jsx模式的包
 import 'ace-builds/src-noconflict/theme-monokai';// monokai的主题样式
 import 'ace-builds/src-noconflict/ext-language_tools'; // 代码联想
+import { input } from '../language/input';
 
-const jsx = `import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-golang'; // sql模式的包
-import 'ace-builds/src-noconflict/mode-jsx';// mysql模式的包`;
 
-export default function Editor(){
-    return (<div>
+type props = {
+    setState:Function,
+    state:string,
+}
+
+export default function Editor(props:props){
+    const {setState,state} = props;
+    return (
         <AceEditor
         mode='jsx'
         theme="monokai"
         name="app_code_editor"
         fontSize={14}
         showPrintMargin
-        height="100vh"
-        width="1000px"
+        height="90vh"
+        width="50vw"
         showGutter
         onChange={value => {
-             console.log(value); // 输出代码编辑器内值改变后的值
+             setState(value)
         }}
-        value={jsx}
+        value={state}
         wrapEnabled
         highlightActiveLine  //突出活动线
         enableSnippets  //启用代码段
@@ -34,5 +38,5 @@ export default function Editor(){
         }}
         annotations={[{ row: 0, column: 2, type: 'error', text: 'Some error.'}]} // 错误，警告
     />
-    </div>)
+    )
 }

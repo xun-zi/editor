@@ -5,7 +5,6 @@ const clone = require('clone');
 
 
 
-
 export function evaluate(node: node, environment: Environment): Obj {
 
     switch (node.ASTkind) {

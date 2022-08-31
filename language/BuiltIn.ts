@@ -1,6 +1,10 @@
 import { Fn, NULL, Obj } from "./object";
 
 type BuiltFnExpression = (props:Obj[]) => Obj; 
+export let putText = ``;
+export const initPutText = () => {
+    putText = ``;
+}
 
 export class FnClass implements Obj{
     callFn:BuiltFnExpression
@@ -19,7 +23,7 @@ export class FnClass implements Obj{
 
 const puts:BuiltFnExpression = (props:Obj[]) => {
     for(const obj of props){
-        console.log(obj.inspect());
+        putText += `${obj.inspect()}\n`
     }
     return NULL;
 }
