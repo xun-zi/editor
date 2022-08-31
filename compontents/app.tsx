@@ -5,8 +5,10 @@ import { input } from "../language/input";
 import { Lexer } from "../language/lexer";
 import { Environment } from "../language/object";
 import { parser } from "../language/parser";
+
+import ShowWindow from "./ShowWindow";
 import Editor from "./Editor";
-import Show from "./show";
+
 
 
 export default function App(){
@@ -40,7 +42,7 @@ export default function App(){
         <div>
           <div style={{display:'flex',}}>
           <Editor setState={setOutput} state={Output}/>
-          <Show text={text}/>
+          <ShowWindow text={text}/>
           </div>
           <button onClick={() => {runHandle()}}>运行</button>
         </div>
