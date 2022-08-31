@@ -77,8 +77,8 @@ export type Ident = {
 export type IfExpression = {
     ASTkind:ASTkind.IfExpression,
     condition:Expression,
-    ifTrue:Expression
-    ifFalse?:Expression
+    ifTrue:Statement
+    ifFalse?:Statement
 }
 
 export type headPar = Statement | null;
@@ -86,7 +86,7 @@ export type headPar = Statement | null;
 export type forExpression = {
     ASTkind:ASTkind.forExpression
     head:headPar[]
-    body:Expression
+    body:Statement
 }
 
 export type codeBlockExpression = {

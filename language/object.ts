@@ -74,6 +74,16 @@ export class Fn implements Obj{
     }
 }
 
+export class ReturnVal implements Obj{
+    value:Obj;
+    constructor(obj:Obj){
+        this.value = obj
+    }
+
+    inspect(): string {
+        return this.value.inspect();
+    }
+}
 
 export class Null implements Obj{
     value:null

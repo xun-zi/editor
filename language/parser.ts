@@ -186,12 +186,12 @@ export class parser {
         const condition = this.parseExpression(Precedence.Bracket)
         this.expectToken(TokenType.Rparen);
         this.readToken();
-        const ifTrue = this.parseExpression(Precedence.Lowest);
+        const ifTrue = this.parseStatement();
         let ifFalse;
         if (this.isPeekTokenType(TokenType.else)) {
             this.readToken();
             this.readToken();
-            ifFalse = this.parseExpression(Precedence.Lowest);
+            ifFalse = this.parseStatement();
         }
 
         return {
@@ -228,7 +228,7 @@ export class parser {
         
         this.expectToken(TokenType.Rparen);
         this.expectToken(TokenType.LBrace);
-        const body = this.parseExpression(Precedence.Lowest);
+        const body = this.parseStatement();
         return {
             ASTkind: ASTkind.forExpression,
             head,
