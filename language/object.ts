@@ -29,8 +29,8 @@ export class Environment {
 
     assign(key: string, value: Obj) {
         if (!this.has(key)) throw new Error(`${key}没有声明`);
-        if (!this.store.has(key)) this.outer?.assign(key, value);
-        this.store.set(key, value);
+        if (this.store.has(key)) this.store.set(key, value);
+        else this.outer?.assign(key, value);
         return value;
     }
 
