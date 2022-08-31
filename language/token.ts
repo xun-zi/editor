@@ -16,6 +16,11 @@ export enum TokenType{
     EOF='EOF',
     Comma=',',
     Semicolon = ";",
+    lessThan='<',
+    lessEqual='<=',
+    greaterThan='>',
+    greaterEqual='>=',
+    Equal='==',
     
 
     //keyword

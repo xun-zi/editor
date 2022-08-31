@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { initPutText, putText } from "../language/BuiltIn";
+import { getPutText, initPutText } from "../language/BuiltIn";
 import { evaluate } from "../language/evaluate";
 import { input } from "../language/input";
 import { Lexer } from "../language/lexer";
@@ -8,6 +8,7 @@ import { parser } from "../language/parser";
 
 import ShowWindow from "./ShowWindow";
 import Editor from "./Editor";
+import { TokenType } from "../language/token";
 
 
 
@@ -15,12 +16,12 @@ export default function App(){
 
     useEffect(() => {
     
-        // const test = new Lexer(input);
-        // let a = test.lexer();
-        // while(a.TokenType !== TokenType.EOF){
-        //   console.log(a)
-        //   a = test.lexer();
-        // }
+        const test = new Lexer(input);
+        let a = test.lexer();
+        while(a.TokenType !== TokenType.EOF){
+          console.log(a)
+          a = test.lexer();
+        }
         runHandle();
       },[])
     
@@ -30,7 +31,7 @@ export default function App(){
         const Program = parse.Program();
         console.log(Program);
         evaluate(Program,new Environment());
-        const newText = putText;
+        const newText = getPutText();
         initPutText();
         setText(newText);
       }

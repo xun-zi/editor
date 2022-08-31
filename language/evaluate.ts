@@ -114,7 +114,9 @@ function evalPrefix(operator: string, expression: Expression, environment: Envir
 }
 
 function evalInfix(expression: infixExpression, environment: Environment): Obj {
-    if (['+', '-', '*', '/'].includes(expression.operator)) return evalInfixCalculate(expression, environment);
+    if (['+', '-', '*', '/',].includes(expression.operator)) return evalInfixCalculate(expression, environment);
+    if(['<','>','<=','>='].includes(expression.operator))return evalInfixcompare(expression,environment)
+    if(expression.operator === '==')return evalEqual(expression,environment);
     if (expression.operator === '=') return evalInfixAssign(expression, environment);
 
     return NULL
@@ -147,6 +149,30 @@ function evalInfixCalculate(expression: infixExpression, environment: Environmen
     return NULL
 }
 
+function evalEqual(expression:infixExpression,environment:Environment):Obj{
+    const { left, right } = expression;
+    const leftExpress = evaluate(left, environment);
+    const rightExpress = evaluate(right, environment);
+    if(leftExpress instanceof Integer && rightExpress instanceof Integer)return new Integer(+(leftExpress.value == rightExpress.value));
+    return new Integer(+(leftExpress === rightExpress));
+}
+
+function evalInfixcompare({ left, operator, right }:infixExpression,environment:Environment):Obj{
+    const leftExpress = evaluate(left,environment);
+    const rightExpress = evaluate(right,environment);
+    if (!(leftExpress instanceof Integer) || !(rightExpress instanceof Integer)) throw new Error(`${left} 或 ${right}运算中没有表达`);
+    switch(operator){
+        case '<':
+            return new Integer(+(leftExpress.value < rightExpress.value));
+        case '>':
+            return new Integer(+(leftExpress.value > rightExpress.value));
+        case '<=':
+            return new Integer(+(leftExpress.value <= rightExpress.value));
+        case '>=':
+            return new Integer(+(leftExpress.value >= rightExpress.value))
+    }
+    return NULL
+}
 
 
 function evalIdent(key: string, environment: Environment): Obj {

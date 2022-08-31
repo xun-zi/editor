@@ -47,7 +47,11 @@ export class Lexer {
                 token = this.newToken(TokenType.RBrace,this.ch);
                 break;
             case '=':
-                token = this.newToken(TokenType.Assign, this.ch);
+                if(this.nextChat() != '=')token = this.newToken(TokenType.Assign,this.ch);
+                else {
+                    this.readChar();
+                    token = this.newToken(TokenType.Equal,'==');
+                }
                 break;
             case '':
                 token = this.newToken(TokenType.EOF, this.ch);
@@ -57,6 +61,21 @@ export class Lexer {
                 break;
             case ',':
                 token = this.newToken(TokenType.Comma,this.ch);
+                break;
+            case '<':
+                if(this.nextChat() != '=')token = this.newToken(TokenType.lessThan,this.ch);
+                else {
+                    this.readChar();
+                    token = this.newToken(TokenType.lessEqual,'<=');
+                }
+                break;
+            case '>':
+                if(this.nextChat() != '=')token = this.newToken(TokenType.greaterThan,this.ch);
+                else {
+                    this.readChar();
+                    token = this.newToken(TokenType.greaterEqual,'>=')
+                }
+                break;
             default:
                 if (this.isDigital(this.ch)) return this.newToken(TokenType.integer, this.readInteger());
                 else if (this.isLetter(this.ch)) {
@@ -109,6 +128,11 @@ export class Lexer {
         this.position = this.nextPosition;
         this.nextPosition++;
         this.ch = this.input[this.position];
+    }
+
+    nextChat(){
+        if(this.nextPosition >= this.input.length)return '';
+        return this.input[this.nextPosition];
     }
 
     skipSpace() {

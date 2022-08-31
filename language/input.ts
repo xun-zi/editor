@@ -1,4 +1,5 @@
 export const input = `
-puts(2333)
-
+for(let i = 10;i >= 0;i = i - 1){
+    puts(i);
+  }
 `

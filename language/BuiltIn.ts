@@ -1,9 +1,13 @@
 import { Fn, NULL, Obj } from "./object";
 
 type BuiltFnExpression = (props:Obj[]) => Obj; 
-export let putText = ``;
+let putText = ``;
 export const initPutText = () => {
     putText = ``;
+}
+
+export const getPutText = () => {
+    return putText
 }
 
 export class FnClass implements Obj{

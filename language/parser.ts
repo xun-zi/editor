@@ -7,6 +7,8 @@ enum Precedence {
     Lowest,
     Assign,
     Bracket,
+    Equal,
+    inequation,
     sum,
     asteriskSlash,
 }
@@ -26,6 +28,11 @@ const PrecedenceExpression: Partial<Record<TokenType, Precedence>> = {
     [TokenType.LBracket]: Precedence.Bracket,
     [TokenType.RBracket]: Precedence.Bracket,
     [TokenType.Assign]: Precedence.Assign,
+    [TokenType.Equal]:Precedence.Equal,
+    [TokenType.lessThan]:Precedence.inequation,
+    [TokenType.lessEqual]:Precedence.inequation,
+    [TokenType.greaterThan]:Precedence.inequation,
+    [TokenType.greaterEqual]:Precedence.inequation,
 }
 
 
@@ -55,7 +62,7 @@ export class parser {
             [TokenType.if]: this.parseIf,
             [TokenType.LBrace]: this.parseCodeBloackExpression,
             [TokenType.for]: this.parseForExpression,
-            [TokenType.fn]:this.parseFunctionExpression
+            [TokenType.fn]:this.parseFunctionExpression,
         }
         this.parseInfixFunction = {
             [TokenType.add]: this.parseInfixExpression,
@@ -63,6 +70,13 @@ export class parser {
             [TokenType.asterisk]: this.parseInfixExpression,
             [TokenType.slash]: this.parseInfixExpression,
             [TokenType.Assign]: this.parseInfixExpression,
+            [TokenType.lessThan]:this.parseInfixExpression,
+            [TokenType.lessEqual]:this.parseInfixExpression,
+            [TokenType.greaterThan]:this.parseInfixExpression,
+            [TokenType.greaterEqual]:this.parseInfixExpression,
+            [TokenType.Equal]:this.parseInfixExpression,
+            
+            
         }
     }
 
@@ -206,7 +220,7 @@ export class parser {
         this.expectToken(TokenType.Lparen);
         const head: headPar[] = [];
         
-        [TokenType.Semicolon, TokenType.Semicolon].forEach((tokenType) => {
+         [TokenType.Semicolon, TokenType.Semicolon].forEach((tokenType) => {
             this.readToken();
             if (this.isCurTokenType(tokenType)) head.push(null);
             else head.push(this.parseStatement());
