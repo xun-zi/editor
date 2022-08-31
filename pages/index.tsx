@@ -10,11 +10,11 @@ import { TokenType } from '../language/token';
 import { parser } from '../language/parser';
 import { evaluate } from '../language/evaluate';
 import { Environment } from '../language/object';
-import { Show } from '../compontents/show';
 import { initPutText, putText } from '../language/BuiltIn';
 
 
 const Editor = dynamic(import('../compontents/Editor'), { ssr: false })
+const Show = dynamic(import('../compontents/show'), { ssr: false })
 
 const Home: NextPage = () => {
 
