@@ -1,4 +1,5 @@
 import { ASTkind, node, Statement, Expression, infixExpression, LetStatement, IdnetExpression, IntegerExpression, IfExpression, forExpression, functionExpresssion, functionUseExpression } from "./ast";
+import { BuiltInFn, FnClass } from "./BuiltIn";
 import { Environment, Fn, Integer, Null, NULL, Obj, ReturnVal } from "./object";
 const clone = require('clone');
 
@@ -41,7 +42,6 @@ function evalProgram(statements: Statement[], environment: Environment): ReturnV
     let returnVal: Null|ReturnVal = NULL;
     for (const statement of statements) {
         const state = evaluate(statement, environment);
-        console.log(state.inspect());
         if (state instanceof ReturnVal) {
             returnVal = state;
             break;
@@ -81,23 +81,24 @@ function evalFunction(expression: functionExpresssion, enviroment: Environment):
 
 function evalFunctionUse(expression: functionUseExpression, enviroment: Environment): Obj {
     const { Ident, paramter } = expression;
-    const fn = enviroment.get(Ident.value);
-    if (!(fn instanceof Fn)) throw new Error(`${Ident.value}不是一个函数`);
+    const fn = evaluate(Ident,enviroment);
+    if (!(fn instanceof FnClass || fn instanceof Fn)) throw new Error(`${Ident.value}不是一个函数`);
 
     const props: Obj[] = [];
     paramter.forEach((exp) => {
         props.push(evaluate(exp, enviroment));
     })
 
-    const fnEnviroment = new Environment(fn.enviroment);
-    fn.paramters.forEach((par, index) => {
-        if (index >= props.length) fnEnviroment.statement(par.value, NULL);
-        else fnEnviroment.statement(par.value, clone(props[index]));
-    })
+    // const fnEnviroment = new Environment(fn.enviroment);
+    // fn.paramters.forEach((par, index) => {
+    //     if (index >= props.length) fnEnviroment.statement(par.value, NULL);
+    //     else fnEnviroment.statement(par.value, clone(props[index]));
+    // })
 
-    let result:Obj = NULL;
-    if (fn.body)result = evaluate(fn.body, fnEnviroment)
-    return result
+    // let result:Obj = NULL;
+    // if (fn.body)result = evaluate(fn.body, fnEnviroment)
+    // return result
+    return fn.Call(props);
 }
 
 function isTrue(obj: Obj) {
@@ -150,7 +151,10 @@ function evalInfixCalculate(expression: infixExpression, environment: Environmen
 
 
 function evalIdent(key: string, environment: Environment): Obj {
-    return environment.get(key);
+    let res:Obj = BuiltInFn[key] || NULL;
+    if(res instanceof Null)res = environment.get(key);
+    
+    return res;
 }
 
 function evalLet(LetStatement: LetStatement, environment: Environment): Obj {
