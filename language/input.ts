@@ -1,18 +1,9 @@
 export const input = `
-class p{
-  a = 1;
-  b = 2;
-  fna(){
-    puts(this.a);
-  }
-
-  fnb(){
-    puts(this.b);
-  }
-}
-
-let a = new p();
-
-puts(a.fna());
-puts(a.fnb())
+let a = [1,2,3,4];
+puts(a[1]);
+puts(a[2]);
+a[1] = 1;
+a[2] = 4;
+puts(a[1]);
+puts(a[2]);
 `

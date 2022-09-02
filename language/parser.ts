@@ -1,4 +1,4 @@
-import { ASTkind, classExpression, classUseExpression, codeBlockExpression, Expression, forExpression, functionExpresssion, functionUseExpression, headPar, IdnetExpression, IfExpression, infixExpression, IntegerExpression, keyValuePair, LetStatement, node, prefixExpression, Program, returnStatement, Statement } from "./ast";
+import { ArrayExpression, ArrayUseExpression, ASTkind, classExpression, classUseExpression, codeBlockExpression, Expression, forExpression, functionExpresssion, functionUseExpression, headPar, IdnetExpression, IfExpression, infixExpression, IntegerExpression, keyValuePair, LetStatement, node, prefixExpression, Program, returnStatement, Statement } from "./ast";
 import { Lexer } from "./lexer";
 import { Token, TokenType } from "./token";
 
@@ -57,6 +57,7 @@ export class parser {
         this.parseFunctionExpression = this.parseFunctionExpression.bind(this);
         this.parseClassExpression = this.parseClassExpression.bind(this);
         this.parseClassUseExpression = this.parseClassUseExpression.bind(this);
+        this.parseArrayExpression = this.parseArrayExpression.bind(this);
 
         this.parseInfixExpression = this.parseInfixExpression.bind(this);
         this.parsePrefixFunction = {
@@ -69,6 +70,7 @@ export class parser {
             [TokenType.fn]:this.parseFunctionExpression,
             [TokenType.class]:this.parseClassExpression,
             [TokenType.new]:this.parseClassUseExpression,
+            [TokenType.LBracket]:this.parseArrayExpression,
         }
         this.parseInfixFunction = {
             [TokenType.add]: this.parseInfixExpression,
@@ -153,7 +155,7 @@ export class parser {
         let expression: Expression = prefix();
 
         while (!this.isPeekTokenType(TokenType.Semicolon)
-            || precedence > this.peekTokenPrecedence()) {
+            && precedence < this.peekTokenPrecedence()) {
             const infix = this.parseInfixFunction[this.peekToken.TokenType];
             if (!infix) return expression;
             this.readToken();
@@ -188,6 +190,13 @@ export class parser {
             props,
             methods,
         }
+    }
+
+    parseArrayExpression():ArrayExpression{
+       return {
+        ASTkind:ASTkind.ArrayExpression,
+        value:this.paramterExpression(TokenType.RBracket)
+       }
     }
 
     parseClassUseExpression():classUseExpression{
@@ -228,15 +237,39 @@ export class parser {
         return expression;
     }
 
-    parseIdent(): IdnetExpression|functionUseExpression {
+    parseIdent(): IdnetExpression|functionUseExpression|ArrayUseExpression {
+        switch(this.peekToken.TokenType){
+            case TokenType.Lparen:
+                return this.parseFunctionUseExpression();
+            case TokenType.LBracket:
+                return this.parseArrayUseExpression();
+        }
         const Ident = this.newIdent();
-        if(!this.isPeekTokenType(TokenType.Lparen))return Ident;
+        return Ident;
+    }
+
+    parseFunctionUseExpression():functionUseExpression{
+        const Ident = this.newIdent();
         this.readToken();
         const paramter = this.paramterExpression(TokenType.Rparen);
         return {
             ASTkind:ASTkind.functionUseExpression,
             Ident,
             paramter,
+        }
+    }
+
+    parseArrayUseExpression():ArrayUseExpression{
+        const Ident = this.newIdent();
+        this.readToken();
+        this.readToken();
+        const value = this.parseExpression(Precedence.Bracket);
+        this.expectToken(TokenType.RBracket);
+        if(this.isPeekTokenType(TokenType.Semicolon))this.readToken();
+        return {
+            ASTkind:ASTkind.ArrayUseExpression,
+            Ident:Ident,
+            value
         }
     }
 

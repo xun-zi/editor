@@ -134,6 +134,17 @@ export class ClassInit implements Obj{
     }
 }
 
+export class ArrayObj implements Obj{
+    value:Obj[];
+
+    constructor(objs:Obj[]){
+        this.value = objs;
+    }
+
+    inspect(): string {
+        return `ArrayObj`;
+    }
+}
 
 export class ReturnVal implements Obj {
     value: Obj;

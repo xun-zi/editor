@@ -1,6 +1,6 @@
-import { ASTkind, node, Statement, Expression, infixExpression, LetStatement, IdnetExpression, IntegerExpression, IfExpression, forExpression, functionExpresssion, functionUseExpression, classExpression, classUseExpression } from "./ast";
+import { ASTkind, node, Statement, Expression, infixExpression, LetStatement, IdnetExpression, IntegerExpression, IfExpression, forExpression, functionExpresssion, functionUseExpression, classExpression, classUseExpression, ArrayExpression, ArrayUseExpression } from "./ast";
 import { BuiltInFn, FnClass } from "./BuiltIn";
-import { ClassInit, ClassObj, Environment, Fn, Integer, Null, NULL, Obj, ReturnVal } from "./object";
+import { ArrayObj, ClassInit, ClassObj, Environment, Fn, Integer, Null, NULL, Obj, ReturnVal } from "./object";
 const clone = require('clone');
 
 
@@ -45,7 +45,10 @@ export function evaluate(node: node, environment: Environment, config?: evalconf
             return classObj;
         case ASTkind.classUseExpression:
             return evalClassUse(node, environment);
-
+        case ASTkind.ArrayExpression:
+            return evalArray(node, environment);
+        case ASTkind.ArrayUseExpression:
+            return evalArrayUse(node, environment);
     }
     throw new Error(`你这个表达式有点问题${node}`)
 }
@@ -64,13 +67,31 @@ function evalProgram(statements: Statement[], environment: Environment): ReturnV
     return returnVal;
 }
 
+function ArrayGet(expression:ArrayUseExpression,enviroment:Environment):[ArrayObj,Integer]{
+    const arrayUse = evaluate(expression.Ident, enviroment);
+    const index = evaluate(expression.value, enviroment);
+    if (!(arrayUse instanceof ArrayObj)) throw new Error(`${expression.Ident.value}不是数组`);
+    if (!(index instanceof Integer)) throw new Error(`下标不是number`);
+    return [arrayUse,index];
+}
+
+function evalArrayUse(expression: ArrayUseExpression, enviroment: Environment): Obj {
+    const [ArrayUse,Index] = ArrayGet(expression,enviroment);
+    return ArrayUse.value[Index.value] || NULL;
+}
+
+function evalArray(expression: ArrayExpression, enviroment: Environment) {
+    const objs = evalExpressionArray(expression.value, enviroment);
+    return new ArrayObj(objs)
+}
+
 function evalClassUse(expression: classUseExpression, environment: Environment): Obj {
-    const {props} = expression;
+    const { props } = expression;
     const Ident = evaluate(expression.Ident, environment);
     if (!(Ident instanceof ClassObj)) throw new Error(`他不是一个类`);
-    
-    
-    return Ident.newClass(evalExpressionArray(props,environment));
+
+
+    return Ident.newClass(evalExpressionArray(props, environment));
 }
 
 function evalIf(expression: IfExpression, environment: Environment): Obj {
@@ -141,37 +162,47 @@ function evalInfix(expression: infixExpression, environment: Environment): Obj {
     if (['<', '>', '<=', '>='].includes(expression.operator)) return evalInfixcompare(expression, environment)
     if (expression.operator === '==') return evalEqual(expression, environment);
     if (expression.operator === '=') return evalInfixAssign(expression, environment);
-    if(expression.operator === '.')return evalDot(expression,environment);
+    if (expression.operator === '.') return evalDot(expression, environment);
 
     return NULL
 }
 
 function evalInfixAssign(expression: infixExpression, environment: Environment): Obj {
     const { left, right } = expression;
-    if (left.ASTkind !== ASTkind.Ident) throw new Error(`赋值的左边不是标识符`);
-    const leftValue = left.value;
-    const value = evaluate(right, environment);
-    environment.assign(leftValue, value);
-    return value;
+    if (left.ASTkind === ASTkind.Ident) {
+        const leftValue = left.value;
+        const value = evaluate(right, environment);
+        environment.assign(leftValue, value);
+        return value;
+    }
+
+    if(left.ASTkind === ASTkind.ArrayUseExpression){
+        const [arrayObj,index] = ArrayGet(left,environment);
+        const value = evaluate(right,environment);
+        arrayObj.value[index.value] = value
+        return value;
+    }
+
+    throw new Error(`赋值的左边不是标识符`);
 }
 
-function evalDot(expression:infixExpression,environment:Environment){
-    const {left,operator,right} = expression;
-    const leftVal = evaluate(left,environment);
-    if(!(leftVal instanceof ClassInit))throw new Error(`这个点链式左参数有问题`);
+function evalDot(expression: infixExpression, environment: Environment) {
+    const { left, operator, right } = expression;
+    const leftVal = evaluate(left, environment);
+    if (!(leftVal instanceof ClassInit)) throw new Error(`这个点链式左参数有问题`);
     const classEnvironment = leftVal.Dot();
-    let method:Obj;
+    let method: Obj;
 
-    if(ASTkind.Ident === right.ASTkind)return classEnvironment.get(right.value);
-    
-    if(ASTkind.functionUseExpression === right.ASTkind)method = classEnvironment.get(right.Ident.value);
+    if (ASTkind.Ident === right.ASTkind) return classEnvironment.get(right.value);
+
+    if (ASTkind.functionUseExpression === right.ASTkind) method = classEnvironment.get(right.Ident.value);
     else throw new Error(`这个点链式右参数参数有问题`);
-    if(!(method instanceof Fn))throw new Error(`${right.Ident.value}这不是一个方法`);
+    if (!(method instanceof Fn)) throw new Error(`${right.Ident.value}这不是一个方法`);
 
-    const objs = evalExpressionArray(right.paramter,environment);
-    switch(operator){
+    const objs = evalExpressionArray(right.paramter, environment);
+    switch (operator) {
         case '.':
-            return  method.Call(objs,leftVal);
+            return method.Call(objs, leftVal);
     }
     return NULL;
 }
@@ -227,9 +258,9 @@ function evalIdent(key: string, environment: Environment): Obj {
     return res;
 }
 
-function evalExpressionArray(exps:Expression[],enviroment:Environment):Obj[]{
+function evalExpressionArray(exps: Expression[], enviroment: Environment): Obj[] {
     const objs = exps.map((exp) => {
-        return evaluate(exp,enviroment);
+        return evaluate(exp, enviroment);
     })
     return objs
 }
