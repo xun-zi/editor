@@ -6,7 +6,7 @@ export interface Obj {
 }
 
 
-
+let cnt = 0;
 export class Environment {
     outer: Environment | undefined
     store: Map<string, Obj>
@@ -17,12 +17,15 @@ export class Environment {
     }
 
     has(key: string): boolean {
+        // console.log(this.store.has,this.outer);
         if (this.store.has(key) || this.outer?.has(key)) return true;
         return false;
     }
 
     get(key: string): Obj {
-        if (!this.has(key)) throw new Error(`不能在未声明${key} 前取值`);
+        if (!this.has(key)) {
+            throw new Error(`不能在未声明${key} 前取值`);
+        }
         let res = this.store.get(key) || this.outer?.get(key) || NULL;
         return res;
     }
@@ -72,15 +75,16 @@ export class Fn implements Obj {
         this.body = body
     }
 
-    Call(props: Obj[],thisVal?:ClassInit):Obj{
+    Call(props: Obj[], thisVal?: ClassInit): Obj {
         const fnEnviroment = new Environment(this.enviroment);
-        fnEnviroment.statement('this',thisVal || NULL);
+        fnEnviroment.statement('this', thisVal || NULL);
         this.paramters.forEach((par, index) => {
             if (index >= props.length) fnEnviroment.statement(par.value, NULL);
             else fnEnviroment.statement(par.value, props[index]);
         })
         let result: Obj = NULL;
         if (this.body) result = evaluate(this.body, fnEnviroment);
+        if(result instanceof ReturnVal)result = result.value;
         return result;
     }
 
@@ -90,27 +94,27 @@ export class Fn implements Obj {
 }
 
 export class ClassObj implements Obj {
-    keyvaluePair:{[key:string]:Obj} = {};
-    methods:{[key:string]:Obj} = {};
-    environmnet:Environment;
-    constructor(props:keyValuePair[],methods:functionExpresssion[],environment:Environment,){
+    keyvaluePair: { [key: string]: Obj } = {};
+    methods: { [key: string]: Obj } = {};
+    environmnet: Environment;
+    constructor(props: keyValuePair[], methods: functionExpresssion[], environment: Environment,) {
         this.environmnet = environment;
         methods.forEach((method) => {
-            this.methods[method.Ident.value] = evaluate(method,environment,{methods:true});
+            this.methods[method.Ident.value] = evaluate(method, environment, { methods: true });
         })
         props.forEach((prop) => {
-            this.keyvaluePair[prop.Ident.value] = prop.value ? evaluate(prop.value,environment) : NULL
+            this.keyvaluePair[prop.Ident.value] = prop.value ? evaluate(prop.value, environment) : NULL
         })
     }
 
-    newClass(props:Obj[]):ClassInit{
+    newClass(props: Obj[]): ClassInit {
         const classEnvironmnet = new Environment(this.environmnet);
-        
-        for(const key in this.methods)classEnvironmnet.statement(key,this.methods[key]);
-        for(const key in this.keyvaluePair)classEnvironmnet.statement(key,this.keyvaluePair[key]);
+
+        for (const key in this.methods) classEnvironmnet.statement(key, this.methods[key]);
+        for (const key in this.keyvaluePair) classEnvironmnet.statement(key, this.keyvaluePair[key]);
         const newClassObj = new ClassInit(classEnvironmnet);
-        const evalconstructor = this.methods['constructor'];
-        if(evalconstructor instanceof Fn)evalconstructor.Call(props,newClassObj);
+        const evalconstructor = this.methods['construction'];
+        if (evalconstructor instanceof Fn) evalconstructor.Call(props, newClassObj);
         return newClassObj;
     }
 
@@ -119,13 +123,13 @@ export class ClassObj implements Obj {
     }
 }
 
-export class ClassInit implements Obj{
-    environment:Environment;
-    constructor(environment:Environment){
+export class ClassInit implements Obj {
+    environment: Environment;
+    constructor(environment: Environment) {
         this.environment = environment;
     }
 
-    Dot(){
+    Dot() {
         return this.environment;
     }
 
@@ -134,10 +138,10 @@ export class ClassInit implements Obj{
     }
 }
 
-export class ArrayObj implements Obj{
-    value:Obj[];
+export class ArrayObj implements Obj {
+    value: Obj[];
 
-    constructor(objs:Obj[]){
+    constructor(objs: Obj[]) {
         this.value = objs;
     }
 

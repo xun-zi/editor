@@ -27,7 +27,8 @@ export class FnClass implements Obj{
 
 const puts:BuiltFnExpression = (props:Obj[]) => {
     for(const obj of props){
-        putText += `${obj.inspect()}\n`
+        console.log(obj.inspect())
+        putText += `${obj.inspect()}\t`
     }
     return NULL;
 }

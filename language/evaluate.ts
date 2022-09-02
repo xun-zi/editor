@@ -12,8 +12,8 @@ const defaultConfig: evalconfig = {
     methods: false,
 }
 
-export function evaluate(node: node, environment: Environment, config?: evalconfig): Obj {
-    config = Object.assign(defaultConfig, config)
+export function evaluate(node: node, environment: Environment, _config?: evalconfig): Obj {
+    const config = Object.assign({},defaultConfig,_config)
     switch (node.ASTkind) {
         case ASTkind.Program:
             return evalProgram(node.value, environment);
@@ -54,8 +54,8 @@ export function evaluate(node: node, environment: Environment, config?: evalconf
 }
 
 
-function evalProgram(statements: Statement[], environment: Environment): ReturnVal | Null {
-    let returnVal: Null | ReturnVal = NULL;
+function evalProgram(statements: Statement[], environment: Environment): Obj {
+    let returnVal: Obj = NULL;
     for (const statement of statements) {
         const state = evaluate(statement, environment);
         if (state instanceof ReturnVal) {
@@ -67,16 +67,16 @@ function evalProgram(statements: Statement[], environment: Environment): ReturnV
     return returnVal;
 }
 
-function ArrayGet(expression:ArrayUseExpression,enviroment:Environment):[ArrayObj,Integer]{
+function ArrayGet(expression: ArrayUseExpression, enviroment: Environment): [ArrayObj, Integer] {
     const arrayUse = evaluate(expression.Ident, enviroment);
     const index = evaluate(expression.value, enviroment);
     if (!(arrayUse instanceof ArrayObj)) throw new Error(`${expression.Ident.value}不是数组`);
     if (!(index instanceof Integer)) throw new Error(`下标不是number`);
-    return [arrayUse,index];
+    return [arrayUse, index];
 }
 
 function evalArrayUse(expression: ArrayUseExpression, enviroment: Environment): Obj {
-    const [ArrayUse,Index] = ArrayGet(expression,enviroment);
+    const [ArrayUse, Index] = ArrayGet(expression, enviroment);
     return ArrayUse.value[Index.value] || NULL;
 }
 
@@ -131,16 +131,6 @@ function evalFunctionUse(expression: functionUseExpression, enviroment: Environm
     paramter.forEach((exp) => {
         props.push(evaluate(exp, enviroment));
     })
-
-    // const fnEnviroment = new Environment(fn.enviroment);
-    // fn.paramters.forEach((par, index) => {
-    //     if (index >= props.length) fnEnviroment.statement(par.value, NULL);
-    //     else fnEnviroment.statement(par.value, clone(props[index]));
-    // })
-
-    // let result:Obj = NULL;
-    // if (fn.body)result = evaluate(fn.body, fnEnviroment)
-    // return result
     return fn.Call(props);
 }
 
@@ -169,6 +159,14 @@ function evalInfix(expression: infixExpression, environment: Environment): Obj {
 
 function evalInfixAssign(expression: infixExpression, environment: Environment): Obj {
     const { left, right } = expression;
+
+    if (left.ASTkind === ASTkind.ArrayUseExpression) {
+        const [arrayObj, index] = ArrayGet(left, environment);
+        const value = evaluate(right, environment);
+        arrayObj.value[index.value] = value
+        return value;
+    }
+
     if (left.ASTkind === ASTkind.Ident) {
         const leftValue = left.value;
         const value = evaluate(right, environment);
@@ -176,17 +174,16 @@ function evalInfixAssign(expression: infixExpression, environment: Environment):
         return value;
     }
 
-    if(left.ASTkind === ASTkind.ArrayUseExpression){
-        const [arrayObj,index] = ArrayGet(left,environment);
-        const value = evaluate(right,environment);
-        arrayObj.value[index.value] = value
-        return value;
+    if(left.ASTkind === ASTkind.infixExpression && left.operator === '.'){
+        const obj = evaluate(right,environment);
+        return DotSet(left,obj,environment);
     }
+
 
     throw new Error(`赋值的左边不是标识符`);
 }
 
-function evalDot(expression: infixExpression, environment: Environment) {
+function evalDot(expression: infixExpression, environment: Environment):Obj{
     const { left, operator, right } = expression;
     const leftVal = evaluate(left, environment);
     if (!(leftVal instanceof ClassInit)) throw new Error(`这个点链式左参数有问题`);
@@ -207,11 +204,23 @@ function evalDot(expression: infixExpression, environment: Environment) {
     return NULL;
 }
 
+function DotSet(expression:infixExpression,obj:Obj,environment:Environment):Obj{
+    const { left, operator, right } = expression;
+    const leftVal = evaluate(left, environment);
+    if (!(leftVal instanceof ClassInit)) throw new Error(`这个点链式左参数有问题`);
+    const classEnvironment = leftVal.Dot();
+
+    if (ASTkind.Ident !== right.ASTkind)throw new Error(`Dot右参数不是变量`);
+    classEnvironment.assign(right.value,obj)
+    return obj;
+}
+
 function evalInfixCalculate(expression: infixExpression, environment: Environment): Obj {
     const { left, operator, right } = expression;
-    const leftExpress = evaluate(left, environment);
-    const rightExpress = evaluate(right, environment);
-    if (!(leftExpress instanceof Integer) || !(rightExpress instanceof Integer)) throw new Error(`${expression}运算中没有表达`);
+    let leftExpress = evaluate(left, environment);
+    let rightExpress = evaluate(right, environment);
+    if (!(leftExpress instanceof Integer) || !(rightExpress instanceof Integer))throw new Error(`${expression}运算中没有表达`);
+    
     switch (operator) {
         case '+':
             return new Integer(leftExpress.value + rightExpress.value);

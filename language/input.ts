@@ -1,9 +1,19 @@
 export const input = `
-let a = [1,2,3,4];
-puts(a[1]);
-puts(a[2]);
-a[1] = 1;
-a[2] = 4;
-puts(a[1]);
-puts(a[2]);
+fn fibonacci (n) {
+  if ( n <= 1 ){
+    return 1
+  };
+  puts(n);
+  return fibonacci(n - 1) + fibonacci(n - 2);
+ }
+ 
+ puts(fibonacci(10))
 `
+
+
+
+
+
+
+
+

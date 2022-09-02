@@ -397,12 +397,13 @@ export class parser {
     //infix
     parseInfixExpression(expression: Expression): infixExpression {
         const operator = this.curToken.value;
+        const operatorPrecedence = this.curTokenPrecedence();
         this.readToken();
         return {
             ASTkind: ASTkind.infixExpression,
             left: expression,
             operator,
-            right: this.parseExpression(this.curTokenPrecedence())
+            right: this.parseExpression(operatorPrecedence)
         }
     }
 

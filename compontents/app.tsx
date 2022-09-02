@@ -16,16 +16,17 @@ export default function App(){
 
     useEffect(() => {
     
-        const test = new Lexer(input);
-        let a = test.lexer();
-        while(a.TokenType !== TokenType.EOF){
-          console.log(a)
-          a = test.lexer();
-        }
-        runHandle();
+        // const test = new Lexer(input);
+        // let a = test.lexer();
+        // while(a.TokenType !== TokenType.EOF){
+        //   console.log(a)
+        //   a = test.lexer();
+        // }
+        // runHandle();
       },[])
     
       const runHandle = () => {
+        // console.log({Output})
         const lexer = new Lexer(Output);
         const parse = new parser(lexer);
         const Program = parse.Program();
