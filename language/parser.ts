@@ -1,4 +1,4 @@
-import { ASTkind, codeBlockExpression, Expression, forExpression, functionExpresssion, functionUseExpression, headPar, IdnetExpression, IfExpression, infixExpression, IntegerExpression, LetStatement, node, prefixExpression, Program, returnStatement, Statement } from "./ast";
+import { ASTkind, classExpression, classUseExpression, codeBlockExpression, Expression, forExpression, functionExpresssion, functionUseExpression, headPar, IdnetExpression, IfExpression, infixExpression, IntegerExpression, keyValuePair, LetStatement, node, prefixExpression, Program, returnStatement, Statement } from "./ast";
 import { Lexer } from "./lexer";
 import { Token, TokenType } from "./token";
 
@@ -11,6 +11,7 @@ enum Precedence {
     inequation,
     sum,
     asteriskSlash,
+    Dot,
 }
 
 type PrefixFunction = () => Expression;
@@ -33,6 +34,7 @@ const PrecedenceExpression: Partial<Record<TokenType, Precedence>> = {
     [TokenType.lessEqual]:Precedence.inequation,
     [TokenType.greaterThan]:Precedence.inequation,
     [TokenType.greaterEqual]:Precedence.inequation,
+    [TokenType.Dot]:Precedence.Dot,
 }
 
 
@@ -53,6 +55,8 @@ export class parser {
         this.parseCodeBloackExpression = this.parseCodeBloackExpression.bind(this);
         this.parseForExpression = this.parseForExpression.bind(this);
         this.parseFunctionExpression = this.parseFunctionExpression.bind(this);
+        this.parseClassExpression = this.parseClassExpression.bind(this);
+        this.parseClassUseExpression = this.parseClassUseExpression.bind(this);
 
         this.parseInfixExpression = this.parseInfixExpression.bind(this);
         this.parsePrefixFunction = {
@@ -63,6 +67,8 @@ export class parser {
             [TokenType.LBrace]: this.parseCodeBloackExpression,
             [TokenType.for]: this.parseForExpression,
             [TokenType.fn]:this.parseFunctionExpression,
+            [TokenType.class]:this.parseClassExpression,
+            [TokenType.new]:this.parseClassUseExpression,
         }
         this.parseInfixFunction = {
             [TokenType.add]: this.parseInfixExpression,
@@ -75,8 +81,7 @@ export class parser {
             [TokenType.greaterThan]:this.parseInfixExpression,
             [TokenType.greaterEqual]:this.parseInfixExpression,
             [TokenType.Equal]:this.parseInfixExpression,
-            
-            
+            [TokenType.Dot]:this.parseInfixExpression,
         }
     }
 
@@ -161,6 +166,54 @@ export class parser {
     }
 
     //prefix
+    parseClassExpression():classExpression{
+        this.expectToken(TokenType.Ident);
+        const Ident = this.newIdent();
+        const props = [];
+        const methods = [];
+
+        this.expectToken(TokenType.LBrace);
+
+        while(!this.isPeekTokenType(TokenType.RBrace)){
+            this.expectToken(TokenType.Ident);
+            if(this.isPeekTokenType(TokenType.Lparen))methods.push(this.parseMethodExpression());
+            else props.push(this.parseKeyValuePair(TokenType.Assign));
+        }
+
+        this.readToken();
+
+        return {
+            ASTkind: ASTkind.classExpression,
+            Ident,
+            props,
+            methods,
+        }
+    }
+
+    parseClassUseExpression():classUseExpression{
+        this.expectToken(TokenType.Ident);
+        const Ident = this.newIdent();
+        this.expectToken(TokenType.Lparen);
+        const props = this.paramterExpression(TokenType.Rparen);
+        return {
+            ASTkind:ASTkind.classUseExpression,
+            Ident,
+            props,
+        }
+    }
+    
+    parseKeyValuePair(tokenType:TokenType):keyValuePair{
+        const Ident = this.newIdent();
+        this.expectToken(tokenType);
+        this.readToken();
+        const value = this.parseExpression(Precedence.Lowest);
+        return {
+            ASTkind:ASTkind.keyValuePair,
+            Ident,
+            value,
+        }
+    }
+
     parseIntegerExpression(): IntegerExpression {
         return {
             ASTkind: ASTkind.Integer,
@@ -252,6 +305,10 @@ export class parser {
 
     parseFunctionExpression():functionExpresssion{
         this.expectToken(TokenType.Ident);
+        return this.parseMethodExpression();
+    }
+
+    parseMethodExpression():functionExpresssion{
         const Ident = this.newIdent();
         this.expectToken(TokenType.Lparen);
         const paramter = this.paramterExpression(TokenType.Rparen);

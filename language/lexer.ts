@@ -62,6 +62,9 @@ export class Lexer {
             case ',':
                 token = this.newToken(TokenType.Comma,this.ch);
                 break;
+            case '.':
+                token = this.newToken(TokenType.Dot,this.ch);
+                break;
             case '<':
                 if(this.nextChat() != '=')token = this.newToken(TokenType.lessThan,this.ch);
                 else {

@@ -14,6 +14,9 @@ export enum ASTkind{
     functionExpresssion='FUNCTIONEXPRESSION',
     functionUseExpression='FUNCTIONUSEEXPRESSION',
     returnStatement='RETURNSTATEMENT',
+    classExpression='ClASSEXPRESSION',
+    classUseExpression='CLASSUSEEXPRESSION',
+    keyValuePair='KEYVALUEPAIR',
 }
 
 export type node = Expression | Statement | Program;
@@ -33,6 +36,9 @@ export type Expression =
     |forExpression
     |functionExpresssion
     |functionUseExpression
+    |classExpression
+    |classUseExpression
+    |keyValuePair
     
 
 export type Program = {
@@ -112,3 +118,21 @@ export type returnStatement = {
     value:Expression
 }
 
+export type keyValuePair = {
+    ASTkind:ASTkind.keyValuePair
+    Ident:Ident
+    value?:Expression;
+}
+
+export type classExpression = {
+    ASTkind:ASTkind.classExpression
+    Ident:Ident
+    props:keyValuePair[]
+    methods:functionExpresssion[]
+}
+
+export type classUseExpression = {
+    ASTkind:ASTkind.classUseExpression
+    Ident:Ident
+    props:Expression[];
+}

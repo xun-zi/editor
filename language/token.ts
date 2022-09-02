@@ -15,6 +15,7 @@ export enum TokenType{
     Assign="=",
     EOF='EOF',
     Comma=',',
+    Dot='.',
     Semicolon = ";",
     lessThan='<',
     lessEqual='<=',
@@ -30,6 +31,8 @@ export enum TokenType{
     for='FOR',
     fn='FUNCTION',
     return='RETURN',
+    class="CLASS",
+    new="NEW",
 }
 
 export type Token = {
@@ -44,6 +47,8 @@ const keywords:{[keywords:string]:TokenType} = {
     ['for']:TokenType.for,
     ['fn']:TokenType.fn,
     ['return']:TokenType.return,
+    ['class']:TokenType.class,
+    ['new']:TokenType.new,
 }
 
 export function lookupIdentify(identify:string){

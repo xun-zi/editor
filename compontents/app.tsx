@@ -16,12 +16,12 @@ export default function App(){
 
     useEffect(() => {
     
-        const test = new Lexer(input);
-        let a = test.lexer();
-        while(a.TokenType !== TokenType.EOF){
-          console.log(a)
-          a = test.lexer();
-        }
+        // const test = new Lexer(input);
+        // let a = test.lexer();
+        // while(a.TokenType !== TokenType.EOF){
+        //   console.log(a)
+        //   a = test.lexer();
+        // }
         runHandle();
       },[])
     

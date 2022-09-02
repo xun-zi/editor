@@ -1,5 +1,18 @@
 export const input = `
-for(let i = 10;i >= 0;i = i - 1){
-    puts(i);
+class p{
+  a = 1;
+  b = 2;
+  fna(){
+    puts(this.a);
   }
+
+  fnb(){
+    puts(this.b);
+  }
+}
+
+let a = new p();
+
+puts(a.fna());
+puts(a.fnb())
 `

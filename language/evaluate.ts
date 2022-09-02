@@ -1,12 +1,19 @@
-import { ASTkind, node, Statement, Expression, infixExpression, LetStatement, IdnetExpression, IntegerExpression, IfExpression, forExpression, functionExpresssion, functionUseExpression } from "./ast";
+import { ASTkind, node, Statement, Expression, infixExpression, LetStatement, IdnetExpression, IntegerExpression, IfExpression, forExpression, functionExpresssion, functionUseExpression, classExpression, classUseExpression } from "./ast";
 import { BuiltInFn, FnClass } from "./BuiltIn";
-import { Environment, Fn, Integer, Null, NULL, Obj, ReturnVal } from "./object";
+import { ClassInit, ClassObj, Environment, Fn, Integer, Null, NULL, Obj, ReturnVal } from "./object";
 const clone = require('clone');
 
 
+type evalconfig = {
+    methods?: boolean,
+}
 
-export function evaluate(node: node, environment: Environment): Obj {
+const defaultConfig: evalconfig = {
+    methods: false,
+}
 
+export function evaluate(node: node, environment: Environment, config?: evalconfig): Obj {
+    config = Object.assign(defaultConfig, config)
     switch (node.ASTkind) {
         case ASTkind.Program:
             return evalProgram(node.value, environment);
@@ -27,18 +34,25 @@ export function evaluate(node: node, environment: Environment): Obj {
         case ASTkind.codeBlockExpression:
             return evalProgram(node.value, environment);
         case ASTkind.functionExpresssion:
-            return evalFunction(node, environment);
+            return evalFunction(node, environment, config);
         case ASTkind.functionUseExpression:
             return evalFunctionUse(node, environment);
         case ASTkind.returnStatement:
             return new ReturnVal(evaluate(node.value, environment));
+        case ASTkind.classExpression:
+            const classObj = new ClassObj(node.props, node.methods, environment);
+            environment.statement(node.Ident.value, classObj);
+            return classObj;
+        case ASTkind.classUseExpression:
+            return evalClassUse(node, environment);
+
     }
     throw new Error(`你这个表达式有点问题${node}`)
 }
 
 
-function evalProgram(statements: Statement[], environment: Environment): ReturnVal|Null {
-    let returnVal: Null|ReturnVal = NULL;
+function evalProgram(statements: Statement[], environment: Environment): ReturnVal | Null {
+    let returnVal: Null | ReturnVal = NULL;
     for (const statement of statements) {
         const state = evaluate(statement, environment);
         if (state instanceof ReturnVal) {
@@ -50,37 +64,46 @@ function evalProgram(statements: Statement[], environment: Environment): ReturnV
     return returnVal;
 }
 
+function evalClassUse(expression: classUseExpression, environment: Environment): Obj {
+    const {props} = expression;
+    const Ident = evaluate(expression.Ident, environment);
+    if (!(Ident instanceof ClassObj)) throw new Error(`他不是一个类`);
+    
+    
+    return Ident.newClass(evalExpressionArray(props,environment));
+}
+
 function evalIf(expression: IfExpression, environment: Environment): Obj {
     const condition = evaluate(expression.condition, environment);
-    let result:Obj = NULL
-    if (isTrue(condition))result = evaluate(expression.ifTrue, environment);
-    else if (expression.ifFalse)result = evaluate(expression.ifFalse, environment);
+    let result: Obj = NULL
+    if (isTrue(condition)) result = evaluate(expression.ifTrue, environment);
+    else if (expression.ifFalse) result = evaluate(expression.ifFalse, environment);
 
     return result
 }
 
 function evalFor(expression: forExpression, environment: Environment): Obj {
     const { head, body } = expression
-    let result:Obj = NULL;
+    let result: Obj = NULL;
     if (head[0]) evaluate(head[0], environment);
     while (!head[1] || isTrue(evaluate(head[1], environment))) {
         result = evaluate(body, environment);
-        if(result instanceof ReturnVal)break;
-        if (head[2])result = evaluate(head[2], environment);
+        if (result instanceof ReturnVal) break;
+        if (head[2]) result = evaluate(head[2], environment);
     }
     return result;
 }
 
-function evalFunction(expression: functionExpresssion, enviroment: Environment): Obj {
+function evalFunction(expression: functionExpresssion, enviroment: Environment, config: evalconfig): Obj {
     const { Ident, paramter, body } = expression;
     const value = new Fn(paramter, enviroment, body);
-    enviroment.statement(Ident.value, value);
+    if (!config.methods) enviroment.statement(Ident.value, value);
     return value;
 }
 
 function evalFunctionUse(expression: functionUseExpression, enviroment: Environment): Obj {
     const { Ident, paramter } = expression;
-    const fn = evaluate(Ident,enviroment);
+    const fn = evaluate(Ident, enviroment);
     if (!(fn instanceof FnClass || fn instanceof Fn)) throw new Error(`${Ident.value}不是一个函数`);
 
     const props: Obj[] = [];
@@ -115,9 +138,10 @@ function evalPrefix(operator: string, expression: Expression, environment: Envir
 
 function evalInfix(expression: infixExpression, environment: Environment): Obj {
     if (['+', '-', '*', '/',].includes(expression.operator)) return evalInfixCalculate(expression, environment);
-    if(['<','>','<=','>='].includes(expression.operator))return evalInfixcompare(expression,environment)
-    if(expression.operator === '==')return evalEqual(expression,environment);
+    if (['<', '>', '<=', '>='].includes(expression.operator)) return evalInfixcompare(expression, environment)
+    if (expression.operator === '==') return evalEqual(expression, environment);
     if (expression.operator === '=') return evalInfixAssign(expression, environment);
+    if(expression.operator === '.')return evalDot(expression,environment);
 
     return NULL
 }
@@ -129,6 +153,27 @@ function evalInfixAssign(expression: infixExpression, environment: Environment):
     const value = evaluate(right, environment);
     environment.assign(leftValue, value);
     return value;
+}
+
+function evalDot(expression:infixExpression,environment:Environment){
+    const {left,operator,right} = expression;
+    const leftVal = evaluate(left,environment);
+    if(!(leftVal instanceof ClassInit))throw new Error(`这个点链式左参数有问题`);
+    const classEnvironment = leftVal.Dot();
+    let method:Obj;
+
+    if(ASTkind.Ident === right.ASTkind)return classEnvironment.get(right.value);
+    
+    if(ASTkind.functionUseExpression === right.ASTkind)method = classEnvironment.get(right.Ident.value);
+    else throw new Error(`这个点链式右参数参数有问题`);
+    if(!(method instanceof Fn))throw new Error(`${right.Ident.value}这不是一个方法`);
+
+    const objs = evalExpressionArray(right.paramter,environment);
+    switch(operator){
+        case '.':
+            return  method.Call(objs,leftVal);
+    }
+    return NULL;
 }
 
 function evalInfixCalculate(expression: infixExpression, environment: Environment): Obj {
@@ -149,19 +194,19 @@ function evalInfixCalculate(expression: infixExpression, environment: Environmen
     return NULL
 }
 
-function evalEqual(expression:infixExpression,environment:Environment):Obj{
+function evalEqual(expression: infixExpression, environment: Environment): Obj {
     const { left, right } = expression;
     const leftExpress = evaluate(left, environment);
     const rightExpress = evaluate(right, environment);
-    if(leftExpress instanceof Integer && rightExpress instanceof Integer)return new Integer(+(leftExpress.value == rightExpress.value));
+    if (leftExpress instanceof Integer && rightExpress instanceof Integer) return new Integer(+(leftExpress.value == rightExpress.value));
     return new Integer(+(leftExpress === rightExpress));
 }
 
-function evalInfixcompare({ left, operator, right }:infixExpression,environment:Environment):Obj{
-    const leftExpress = evaluate(left,environment);
-    const rightExpress = evaluate(right,environment);
+function evalInfixcompare({ left, operator, right }: infixExpression, environment: Environment): Obj {
+    const leftExpress = evaluate(left, environment);
+    const rightExpress = evaluate(right, environment);
     if (!(leftExpress instanceof Integer) || !(rightExpress instanceof Integer)) throw new Error(`${left} 或 ${right}运算中没有表达`);
-    switch(operator){
+    switch (operator) {
         case '<':
             return new Integer(+(leftExpress.value < rightExpress.value));
         case '>':
@@ -176,10 +221,17 @@ function evalInfixcompare({ left, operator, right }:infixExpression,environment:
 
 
 function evalIdent(key: string, environment: Environment): Obj {
-    let res:Obj = BuiltInFn[key] || NULL;
-    if(res instanceof Null)res = environment.get(key);
-    
+    let res: Obj = BuiltInFn[key] || NULL;
+    if (res instanceof Null) res = environment.get(key);
+
     return res;
+}
+
+function evalExpressionArray(exps:Expression[],enviroment:Environment):Obj[]{
+    const objs = exps.map((exp) => {
+        return evaluate(exp,enviroment);
+    })
+    return objs
 }
 
 function evalLet(LetStatement: LetStatement, environment: Environment): Obj {

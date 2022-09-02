@@ -1,4 +1,4 @@
-import { ASTkind, codeBlockExpression, Expression, Ident, infixExpression } from "./ast"
+import { ASTkind, classUseExpression, codeBlockExpression, Expression, functionExpresssion, Ident, infixExpression, keyValuePair } from "./ast"
 import { evaluate } from "./evaluate"
 
 export interface Obj {
@@ -72,8 +72,9 @@ export class Fn implements Obj {
         this.body = body
     }
 
-    Call(props: Obj[]):Obj{
+    Call(props: Obj[],thisVal?:ClassInit):Obj{
         const fnEnviroment = new Environment(this.enviroment);
+        fnEnviroment.statement('this',thisVal || NULL);
         this.paramters.forEach((par, index) => {
             if (index >= props.length) fnEnviroment.statement(par.value, NULL);
             else fnEnviroment.statement(par.value, props[index]);
@@ -87,6 +88,52 @@ export class Fn implements Obj {
         return `Function`
     }
 }
+
+export class ClassObj implements Obj {
+    keyvaluePair:{[key:string]:Obj} = {};
+    methods:{[key:string]:Obj} = {};
+    environmnet:Environment;
+    constructor(props:keyValuePair[],methods:functionExpresssion[],environment:Environment,){
+        this.environmnet = environment;
+        methods.forEach((method) => {
+            this.methods[method.Ident.value] = evaluate(method,environment,{methods:true});
+        })
+        props.forEach((prop) => {
+            this.keyvaluePair[prop.Ident.value] = prop.value ? evaluate(prop.value,environment) : NULL
+        })
+    }
+
+    newClass(props:Obj[]):ClassInit{
+        const classEnvironmnet = new Environment(this.environmnet);
+        
+        for(const key in this.methods)classEnvironmnet.statement(key,this.methods[key]);
+        for(const key in this.keyvaluePair)classEnvironmnet.statement(key,this.keyvaluePair[key]);
+        const newClassObj = new ClassInit(classEnvironmnet);
+        const evalconstructor = this.methods['constructor'];
+        if(evalconstructor instanceof Fn)evalconstructor.Call(props,newClassObj);
+        return newClassObj;
+    }
+
+    inspect(): string {
+        return `ClassObj`
+    }
+}
+
+export class ClassInit implements Obj{
+    environment:Environment;
+    constructor(environment:Environment){
+        this.environment = environment;
+    }
+
+    Dot(){
+        return this.environment;
+    }
+
+    inspect(): string {
+        return `ClassInit`
+    }
+}
+
 
 export class ReturnVal implements Obj {
     value: Obj;
