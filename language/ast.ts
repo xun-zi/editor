@@ -19,6 +19,7 @@ export enum ASTkind{
     keyValuePair='KEYVALUEPAIR',
     ArrayExpression='ARRAYEXPRESSION',
     ArrayUseExpression='ARRAYUSEEXPRESSION',
+    StringExpression='STRINGEXPRESSION',
 }
 
 export type node = Expression | Statement | Program;
@@ -43,6 +44,7 @@ export type Expression =
     |keyValuePair
     |ArrayExpression
     |ArrayUseExpression
+    |StringExpression
 
 export type Program = {
     ASTkind:ASTkind.Program
@@ -149,4 +151,9 @@ export type ArrayUseExpression = {
     ASTkind:ASTkind.ArrayUseExpression
     Ident:Ident
     value:Expression
+}
+
+export type StringExpression = {
+    ASTkind:ASTkind.StringExpression
+    value:string
 }

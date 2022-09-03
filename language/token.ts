@@ -22,7 +22,6 @@ export enum TokenType{
     greaterThan='>',
     greaterEqual='>=',
     Equal='==',
-    
 
     //keyword
     Let="LET",
@@ -33,6 +32,7 @@ export enum TokenType{
     return='RETURN',
     class="CLASS",
     new="NEW",
+    String='STRING',
 }
 
 export type Token = {

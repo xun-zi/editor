@@ -15,14 +15,13 @@ import { TokenType } from "../language/token";
 export default function App(){
 
     useEffect(() => {
-    
-        // const test = new Lexer(input);
-        // let a = test.lexer();
-        // while(a.TokenType !== TokenType.EOF){
-        //   console.log(a)
-        //   a = test.lexer();
-        // }
-        // runHandle();
+        const test = new Lexer(input);
+        let a = test.lexer();
+        while(a.TokenType !== TokenType.EOF){
+          console.log(a)
+          a = test.lexer();
+        }
+        runHandle();
       },[])
     
       const runHandle = () => {
@@ -38,7 +37,7 @@ export default function App(){
       }
     
       const [Output,setOutput] = useState(input);
-      const [text,setText] = useState('')
+      const [text,setText] = useState<string[]>([])
       console.log(text)
       return (
         <div>

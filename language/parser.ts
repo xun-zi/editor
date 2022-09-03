@@ -1,4 +1,4 @@
-import { ArrayExpression, ArrayUseExpression, ASTkind, classExpression, classUseExpression, codeBlockExpression, Expression, forExpression, functionExpresssion, functionUseExpression, headPar, IdnetExpression, IfExpression, infixExpression, IntegerExpression, keyValuePair, LetStatement, node, prefixExpression, Program, returnStatement, Statement } from "./ast";
+import { ArrayExpression, ArrayUseExpression, ASTkind, classExpression, classUseExpression, codeBlockExpression, Expression, forExpression, functionExpresssion, functionUseExpression, headPar, IdnetExpression, IfExpression, infixExpression, IntegerExpression, keyValuePair, LetStatement, node, prefixExpression, Program, returnStatement, Statement, StringExpression } from "./ast";
 import { Lexer } from "./lexer";
 import { Token, TokenType } from "./token";
 
@@ -58,6 +58,7 @@ export class parser {
         this.parseClassExpression = this.parseClassExpression.bind(this);
         this.parseClassUseExpression = this.parseClassUseExpression.bind(this);
         this.parseArrayExpression = this.parseArrayExpression.bind(this);
+        this.parseStringExpression = this.parseStringExpression.bind(this);
 
         this.parseInfixExpression = this.parseInfixExpression.bind(this);
         this.parsePrefixFunction = {
@@ -71,6 +72,7 @@ export class parser {
             [TokenType.class]:this.parseClassExpression,
             [TokenType.new]:this.parseClassUseExpression,
             [TokenType.LBracket]:this.parseArrayExpression,
+            [TokenType.String]:this.parseStringExpression,
         }
         this.parseInfixFunction = {
             [TokenType.add]: this.parseInfixExpression,
@@ -168,6 +170,18 @@ export class parser {
     }
 
     //prefix
+
+    parseStringExpression():StringExpression{
+        return this.createString();
+    }
+
+    createString():StringExpression{
+        return {
+            ASTkind:ASTkind.StringExpression,
+            value:this.curToken.value
+        }
+    }
+
     parseClassExpression():classExpression{
         this.expectToken(TokenType.Ident);
         const Ident = this.newIdent();
@@ -180,6 +194,7 @@ export class parser {
             this.expectToken(TokenType.Ident);
             if(this.isPeekTokenType(TokenType.Lparen))methods.push(this.parseMethodExpression());
             else props.push(this.parseKeyValuePair(TokenType.Assign));
+            
         }
 
         this.readToken();
@@ -213,9 +228,15 @@ export class parser {
     
     parseKeyValuePair(tokenType:TokenType):keyValuePair{
         const Ident = this.newIdent();
-        this.expectToken(tokenType);
-        this.readToken();
-        const value = this.parseExpression(Precedence.Lowest);
+        let value;
+        if(this.isPeekTokenType(tokenType)){
+            this.readToken();
+            this.readToken();
+            value = this.parseExpression(Precedence.Lowest);
+        }
+
+        this.isSemicolonReadToken();
+        
         return {
             ASTkind:ASTkind.keyValuePair,
             Ident,
@@ -438,6 +459,8 @@ export class parser {
         this.peekToken = this.lexer.lexer();
     }
 
-
+    isSemicolonReadToken(){
+        if(this.isPeekTokenType(TokenType.Semicolon))this.readToken();
+    }
 
 }

@@ -79,12 +79,20 @@ export class Lexer {
                     token = this.newToken(TokenType.greaterEqual,'>=')
                 }
                 break;
+            case "'":{
+                let position = this.position + 1;
+                this.readChar();
+                while(this.ch !== "'" && this.ch !== "")this.readChar();
+                token = this.newToken(TokenType.String,this.input.slice(position,this.position));
+                break;
+            }
             default:
                 if (this.isDigital(this.ch)) return this.newToken(TokenType.integer, this.readInteger());
                 else if (this.isLetter(this.ch)) {
                     const tokenValue = this.readIdentify();
                     return this.newToken(lookupIdentify(tokenValue), tokenValue);
                 }
+                
                 throw new Error(`未定义的字符${this.ch}`);
         }
         this.readChar();

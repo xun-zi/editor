@@ -1,13 +1,13 @@
 import { Fn, NULL, Obj } from "./object";
 
 type BuiltFnExpression = (props:Obj[]) => Obj; 
-let putText = ``;
+let putTexts:string[] = [];
 export const initPutText = () => {
-    putText = ``;
+    putTexts = [];
 }
 
 export const getPutText = () => {
-    return putText
+    return putTexts
 }
 
 export class FnClass implements Obj{
@@ -28,7 +28,7 @@ export class FnClass implements Obj{
 const puts:BuiltFnExpression = (props:Obj[]) => {
     for(const obj of props){
         console.log(obj.inspect())
-        putText += `${obj.inspect()}\t`
+        putTexts.push(`${obj.inspect()}    `);
     }
     return NULL;
 }

@@ -6,7 +6,7 @@ export interface Obj {
 }
 
 
-let cnt = 0;
+
 export class Environment {
     outer: Environment | undefined
     store: Map<string, Obj>
@@ -53,6 +53,17 @@ export class Integer implements Obj {
     inspect(): string {
         return `${this.value}`
     }
+}
+
+export class Str implements Obj{
+    value:string;
+    constructor(value:string){
+        this.value = value;
+    }
+
+    inspect(): string {
+        return this.value;
+    }   
 }
 
 

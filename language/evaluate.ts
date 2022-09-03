@@ -1,6 +1,6 @@
-import { ASTkind, node, Statement, Expression, infixExpression, LetStatement, IdnetExpression, IntegerExpression, IfExpression, forExpression, functionExpresssion, functionUseExpression, classExpression, classUseExpression, ArrayExpression, ArrayUseExpression } from "./ast";
+import { ASTkind, node, Statement, Expression, infixExpression, LetStatement, IdnetExpression, IntegerExpression, IfExpression, forExpression, functionExpresssion, functionUseExpression, classExpression, classUseExpression, ArrayExpression, ArrayUseExpression, StringExpression } from "./ast";
 import { BuiltInFn, FnClass } from "./BuiltIn";
-import { ArrayObj, ClassInit, ClassObj, Environment, Fn, Integer, Null, NULL, Obj, ReturnVal } from "./object";
+import { ArrayObj, ClassInit, ClassObj, Environment, Fn, Integer, Null, NULL, Obj, ReturnVal, Str } from "./object";
 const clone = require('clone');
 
 
@@ -49,6 +49,8 @@ export function evaluate(node: node, environment: Environment, _config?: evalcon
             return evalArray(node, environment);
         case ASTkind.ArrayUseExpression:
             return evalArrayUse(node, environment);
+        case ASTkind.StringExpression:
+            return new Str(node.value);
     }
     throw new Error(`你这个表达式有点问题${node}`)
 }
@@ -66,6 +68,7 @@ function evalProgram(statements: Statement[], environment: Environment): Obj {
 
     return returnVal;
 }
+
 
 function ArrayGet(expression: ArrayUseExpression, enviroment: Environment): [ArrayObj, Integer] {
     const arrayUse = evaluate(expression.Ident, enviroment);
@@ -143,7 +146,7 @@ function evalInteger(expression: IntegerExpression): Integer {
 }
 
 function evalPrefix(operator: string, expression: Expression, environment: Environment): Obj {
-
+    
     return NULL
 }
 
