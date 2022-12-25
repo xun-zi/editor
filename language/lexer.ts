@@ -119,7 +119,7 @@ export class Lexer {
     }
 
     isLetter(ch: string): boolean {
-        if (ch === '_' || (ch >= 'a' && ch <= 'z')) return true;
+        if (ch === '_' || (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')) return true;
         return false;
     }
 
